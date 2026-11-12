@@ -35,7 +35,7 @@ jobs:
 
       - name: Generate cibuildwheel config
         working-directory: scripts
-        run: python cibw_config.py "${{ inputs.package }}" > /tmp/cibw.toml
+        run: python cibw_config.py "${{ inputs.package }}" "${{ inputs.version }}" > /tmp/cibw.toml
 
       - name: Build
         env:

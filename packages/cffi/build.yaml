@@ -7,10 +7,4 @@ package:
 
 cibuildwheel:
   before_all: yum install -y libffi-devel
-  # GraalPy's PyTuple_GET_ITEM is not an lvalue, so cffi's
-  # `&PyTuple_GET_ITEM(fargs, 0)` fails to compile. pfargs is only read, so
-  # copy the items into a stack array instead.
-  before_build: |
-    sed -i 's|pfargs = (CTypeDescrObject \*\*)&PyTuple_GET_ITEM(fargs, 0);|{ Py_ssize_t _i, _n = PyTuple_GET_SIZE(fargs); pfargs = alloca(_n * sizeof(*pfargs)); for (_i = 0; _i < _n; _i++) pfargs[_i] = (CTypeDescrObject *)PyTuple_GET_ITEM(fargs, _i); }|' src/c/_cffi_backend.c
-    grep -q 'alloca(_n' src/c/_cffi_backend.c
   test_command: python -c "import cffi; print(cffi.__version__)"
