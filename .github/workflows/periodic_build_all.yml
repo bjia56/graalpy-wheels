@@ -1,0 +1,47 @@
+name: Periodic build all
+concurrency: periodic-build-all
+
+on:
+  schedule:
+    - cron: "15 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  generate_matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.gen.outputs.matrix }}
+      len: ${{ steps.gen.outputs.len }}
+    steps:
+      - uses: actions/checkout@v5
+      - run: git fetch --tags
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml requests
+      - id: gen
+        working-directory: scripts
+        run: |
+          MATRIX=$(python generate_build_matrix.py)
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+          echo "len=$(echo "$MATRIX" | jq length)" >> "$GITHUB_OUTPUT"
+
+  build_matrix:
+    needs: generate_matrix
+    if: ${{ fromJSON(needs.generate_matrix.outputs.len) > 0 }}
+    strategy:
+      matrix:
+        params: ${{ fromJSON(needs.generate_matrix.outputs.matrix) }}
+      fail-fast: false
+      # serial, so each build can consume wheels published by the previous one
+      max-parallel: 1
+    uses: ./.github/workflows/release.yml
+    with:
+      package: ${{ matrix.params.package }}
+      version: ${{ matrix.params.version }}
+      graalpy: ${{ matrix.params.graalpy }}

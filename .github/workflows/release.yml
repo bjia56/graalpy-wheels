@@ -1,0 +1,44 @@
+name: Build and release
+
+on:
+  workflow_dispatch:
+    inputs:
+      package: {required: true, type: string}
+      version: {required: true, type: string}
+      graalpy: {required: true, type: string}
+  workflow_call:
+    inputs:
+      package: {required: true, type: string}
+      version: {required: true, type: string}
+      graalpy: {required: true, type: string}
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    uses: ./.github/workflows/build_wheel.yml
+    with:
+      package: ${{ inputs.package }}
+      version: ${{ inputs.version }}
+      graalpy: ${{ inputs.graalpy }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          name: ${{ inputs.package }}-${{ inputs.version }}-${{ inputs.graalpy }}
+          path: wheelhouse
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.package }}-${{ inputs.version }}-${{ inputs.graalpy }}
+          body: ${{ inputs.package }} ${{ inputs.version }} for GraalPy (${{ inputs.graalpy }}), Linux x86_64
+          files: wheelhouse/*.whl
+
+  publish:
+    needs: release
+    uses: ./.github/workflows/pages.yml

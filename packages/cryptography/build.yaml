@@ -1,0 +1,16 @@
+# Which GraalPy builds to produce. Identifiers are cibuildwheel build ids.
+graalpy:
+  - gp312_250
+  - gp313_253
+
+package:
+  versions: latest   # or a pinned list, e.g. ["46.0.3"]
+
+cibuildwheel:
+  # cryptography is built with Rust (maturin/setuptools-rust)
+  before_all: >-
+    curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal &&
+    yum install -y openssl-devel perl-IPC-Cmd
+  environment:
+    PATH: "$HOME/.cargo/bin:$PATH"
+  test_command: python -c "import cryptography, cryptography.hazmat.backends.openssl; print(cryptography.__version__)"
