@@ -1,0 +1,10 @@
+graalpy:
+  - gp312_250
+  - gp313_253
+
+package:
+  versions: latest
+
+cibuildwheel:
+  before_all: yum install -y libffi-devel
+  test_command: python -c "import cffi; print(cffi.__version__)"
