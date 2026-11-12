@@ -40,8 +40,7 @@ jobs:
       - name: Build
         env:
           CIBW_BUILD: ${{ inputs.graalpy }}-manylinux_x86_64
-          CIBW_CONFIG_FILE: /tmp/cibw.toml
-        run: cibuildwheel --output-dir wheelhouse /tmp/sdist/*.tar.gz
+        run: cibuildwheel --config-file /tmp/cibw.toml --output-dir wheelhouse /tmp/sdist/*.tar.gz
 
       - name: Keep only this package's wheels
         working-directory: scripts

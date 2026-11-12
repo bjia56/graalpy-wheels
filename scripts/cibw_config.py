@@ -18,10 +18,14 @@ def main(package: str):
     lines = ["[tool.cibuildwheel]"]
     lines.append('enable = ["graalpy"]')
     lines.append('manylinux-x86_64-image = "manylinux_2_28"')
-    lines.append("environment = " + json.dumps(env))
     for key in ("before_all", "before_build", "test_command", "test_requires"):
         if key in cfg:
             lines.append(f'{key.replace("_", "-")} = {json.dumps(cfg[key])}')
+    # json.dumps yields valid TOML basic strings; a table keeps the env readable
+    lines.append("")
+    lines.append("[tool.cibuildwheel.environment]")
+    for k, v in env.items():
+        lines.append(f"{k} = {json.dumps(str(v))}")
     print("\n".join(lines))
 
 
