@@ -24,7 +24,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install tooling
-        run: pip install pyyaml requests cibuildwheel==4.3.5
+        run: pip install -r requirements.txt
 
       - name: Fetch sdist from PyPI
         run: |
@@ -42,6 +42,10 @@ jobs:
           CIBW_BUILD: ${{ inputs.graalpy }}-manylinux_x86_64
           CIBW_CONFIG_FILE: /tmp/cibw.toml
         run: cibuildwheel --output-dir wheelhouse /tmp/sdist/*.tar.gz
+
+      - name: Keep only this package's wheels
+        working-directory: scripts
+        run: python filter_wheels.py "${{ inputs.package }}" "$GITHUB_WORKSPACE/wheelhouse"
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
