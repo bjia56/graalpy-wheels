@@ -1,0 +1,9 @@
+graalpy:
+  - gp312_250
+  - gp313_253
+
+package:
+  versions: latest
+
+cibuildwheel:
+  test_command: python -c "import yaml; print(yaml.__version__)"

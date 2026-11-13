@@ -1,0 +1,10 @@
+graalpy:
+  - gp312_250
+  - gp313_253
+
+package:
+  versions: latest
+
+cibuildwheel:
+  # PyNaCl builds its bundled libsodium; cffi comes from this index.
+  test_command: python -c "import nacl.bindings, nacl; print(nacl.__version__)"

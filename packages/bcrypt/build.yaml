@@ -1,0 +1,13 @@
+graalpy:
+  - gp312_250
+  - gp313_253
+
+package:
+  versions: latest
+
+cibuildwheel:
+  # bcrypt is built with Rust (maturin).
+  before_all: curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+  environment:
+    PATH: "$HOME/.cargo/bin:$PATH"
+  test_command: python -c "import bcrypt; print(bcrypt.__version__)"
