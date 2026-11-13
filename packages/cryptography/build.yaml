@@ -10,9 +10,11 @@ cibuildwheel:
   # cryptography is built with Rust (maturin) and needs OpenSSL >= 3.0.
   # manylinux_2_28 only ships OpenSSL 1.1.1, so build a pinned 3.5 LTS
   # release statically into /opt/openssl (the wheel then carries no libssl).
+  # perl-core: OpenSSL's build scripts need Perl modules (e.g. Time::Piece) that
+  # the minimal manylinux perl lacks.
   before_all: |
     set -e
-    yum install -y perl-IPC-Cmd
+    yum install -y perl-core
     curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
     curl -sSL -o /tmp/openssl.tar.gz https://github.com/openssl/openssl/releases/download/openssl-3.5.9/openssl-3.5.9.tar.gz
     echo "603f5602e2eef00d77fbd429d34dcd5822bb301757a1bc9cdb24c670f1eb859a  /tmp/openssl.tar.gz" | sha256sum -c -
