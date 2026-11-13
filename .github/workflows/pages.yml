@@ -11,6 +11,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  actions: write   # to delete the github-pages artifact after deploying
 
 concurrency:
   group: pages
@@ -40,3 +41,18 @@ jobs:
           path: _site
       - id: deployment
         uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
+
+      # A matrix build deploys several times within one workflow run, and
+      # deploy-pages fails if more than one "github-pages" artifact exists in
+      # the run. Remove it once we're done, even if the deploy failed.
+      - name: Delete Pages artifact
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" \
+            --jq '.artifacts[] | select(.name == "github-pages") | .id' |
+          while read -r id; do
+            echo "deleting artifact $id"
+            gh api -X DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$id"
+          done
