@@ -6,16 +6,19 @@ on:
       package: {required: true, type: string}
       version: {required: true, type: string}
       graalpy: {required: true, type: string}
+      platform: {required: true, type: string}   # e.g. manylinux_x86_64, manylinux_aarch64
   workflow_dispatch:
     inputs:
       package: {required: true, type: string}
       version: {required: true, type: string}
       graalpy: {required: true, type: string}
+      platform: {required: true, type: string}   # e.g. manylinux_x86_64, manylinux_aarch64
 
 jobs:
   build:
-    name: ${{ inputs.package }} ${{ inputs.version }} (${{ inputs.graalpy }})
-    runs-on: ubuntu-latest
+    name: ${{ inputs.package }} ${{ inputs.version }} (${{ inputs.graalpy }}, ${{ inputs.platform }})
+    # native runners for each architecture (no QEMU)
+    runs-on: ${{ endsWith(inputs.platform, 'aarch64') && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
@@ -39,7 +42,7 @@ jobs:
 
       - name: Build
         env:
-          CIBW_BUILD: ${{ inputs.graalpy }}-manylinux_x86_64
+          CIBW_BUILD: ${{ inputs.graalpy }}-${{ inputs.platform }}
         run: cibuildwheel --config-file /tmp/cibw.toml --output-dir wheelhouse /tmp/sdist/*.tar.gz
 
       - name: Keep only this package's wheels
@@ -48,6 +51,6 @@ jobs:
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: ${{ inputs.package }}-${{ inputs.version }}-${{ inputs.graalpy }}
+          name: ${{ inputs.package }}-${{ inputs.version }}-${{ inputs.graalpy }}-${{ inputs.platform }}
           path: wheelhouse/*.whl
           if-no-files-found: error

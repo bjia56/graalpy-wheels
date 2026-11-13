@@ -6,11 +6,13 @@ on:
       package: {required: true, type: string}
       version: {required: true, type: string}
       graalpy: {required: true, type: string}
+      platform: {required: true, type: string}   # e.g. manylinux_x86_64, manylinux_aarch64
   workflow_call:
     inputs:
       package: {required: true, type: string}
       version: {required: true, type: string}
       graalpy: {required: true, type: string}
+      platform: {required: true, type: string}   # e.g. manylinux_x86_64, manylinux_aarch64
 
 permissions:
   contents: write
@@ -25,6 +27,7 @@ jobs:
       package: ${{ inputs.package }}
       version: ${{ inputs.version }}
       graalpy: ${{ inputs.graalpy }}
+      platform: ${{ inputs.platform }}
 
   release:
     needs: build
@@ -32,8 +35,10 @@ jobs:
     steps:
       - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
         with:
-          name: ${{ inputs.package }}-${{ inputs.version }}-${{ inputs.graalpy }}
+          name: ${{ inputs.package }}-${{ inputs.version }}-${{ inputs.graalpy }}-${{ inputs.platform }}
           path: wheelhouse
+      # The release is shared by all platforms of a (package, version, graalpy):
+      # the first platform creates it, later ones add their wheels to it.
       - uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           tag_name: ${{ inputs.package }}-${{ inputs.version }}-${{ inputs.graalpy }}

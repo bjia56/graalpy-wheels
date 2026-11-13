@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
-"""Print a JSON build matrix of (package, version, graalpy) not yet released."""
+"""Print a JSON build matrix of (package, version, graalpy, platform) with no wheel on its release yet."""
 import itertools
 import json
-import subprocess
 import sys
 
 import requests
 
-from common import list_packages, load_buildspec, tag_for
+from common import list_packages, load_buildspec, released_builds
 
 MAX_JOBS = 15
 
@@ -23,21 +22,18 @@ def package_versions(package: str, spec: dict):
     return [str(v)]
 
 
-def existing_tags():
-    out = subprocess.check_output(["git", "tag", "-l"], text=True)
-    return set(out.split())
-
-
 def main():
-    have = existing_tags()
+    have = released_builds()
     matrix = []
     for package in list_packages():
         spec = load_buildspec(package)
         if spec.get("disable"):
             continue
-        for version, gp in itertools.product(package_versions(package, spec), spec["graalpy"]):
-            if tag_for(package, version, gp) not in have:
-                matrix.append({"package": package, "version": version, "graalpy": gp})
+        for version, gp, plat in itertools.product(
+            package_versions(package, spec), spec["graalpy"], spec["platforms"]
+        ):
+            if (package, version, gp, plat) not in have:
+                matrix.append({"package": package, "version": version, "graalpy": gp, "platform": plat})
     json.dump(matrix[:MAX_JOBS], sys.stdout)
 
 

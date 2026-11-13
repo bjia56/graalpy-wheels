@@ -34,6 +34,7 @@ def main(package: str, version: str):
     lines = ["[tool.cibuildwheel]"]
     lines.append('enable = ["graalpy"]')
     lines.append('manylinux-x86_64-image = "manylinux_2_28"')
+    lines.append('manylinux-aarch64-image = "manylinux_2_28"')
     # `patch` is needed to apply GraalPy's package patches
     before_all = "command -v patch >/dev/null || yum install -y patch"
     if cfg.get("before_all"):

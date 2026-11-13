@@ -10,31 +10,11 @@ import pathlib
 import shutil
 import sys
 
-import requests
-
-from common import OWNER_REPO, ROOT, INDEX_URL, parse_tag
+from common import ROOT, INDEX_URL, fetch_releases, parse_tag
 from normalize import normalize
 
 OUT = ROOT / "_site"
 STATIC = ROOT / "web"
-
-
-def fetch_releases():
-    headers = {"Accept": "application/vnd.github+json"}
-    if os.environ.get("GITHUB_TOKEN"):
-        headers["Authorization"] = f"Bearer {os.environ['GITHUB_TOKEN']}"
-    page = 1
-    while True:
-        r = requests.get(
-            f"https://api.github.com/repos/{OWNER_REPO}/releases",
-            params={"per_page": 100, "page": page}, headers=headers, timeout=30,
-        )
-        r.raise_for_status()
-        batch = r.json()
-        if not batch:
-            return
-        yield from batch
-        page += 1
 
 
 def collect():
