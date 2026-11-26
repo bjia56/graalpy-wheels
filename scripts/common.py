@@ -93,6 +93,49 @@ def released_builds() -> Set[tuple]:
     return done
 
 
+def graalpy_wheel_tag(graalpy: str) -> str:
+    """'gp312_250' -> 'graalpy312-graalpy250_312_native' (python+abi tag of GraalPy wheels)."""
+    m = re.fullmatch(r"gp(\d+)_(\d+)", graalpy)
+    if not m:
+        raise ValueError(f"unrecognised graalpy build id {graalpy!r}")
+    py, gp = m.groups()
+    return f"graalpy{py}-graalpy{gp}_{py}_native"
+
+
+@functools.lru_cache(maxsize=None)
+def pypi_wheel_filenames(package: str, version: str) -> frozenset:
+    """Wheel filenames upstream has published on PyPI for this release."""
+    r = requests.get(f"https://pypi.org/pypi/{package}/{version}/json", timeout=30)
+    if r.status_code == 404:
+        return frozenset()
+    r.raise_for_status()
+    return frozenset(
+        u["filename"] for u in r.json().get("urls", []) if u["filename"].endswith(".whl")
+    )
+
+
+def upstream_has_wheel(package: str, version: str, graalpy: str, platform: str) -> bool:
+    """True if PyPI already ships a wheel usable for this build: an exact
+    GraalPy tag match on a linux wheel of the right arch, or a universal
+    py3-none-any wheel."""
+    tag = graalpy_wheel_tag(graalpy)
+    arch = platform.split("_", 1)[1]
+    for fn in pypi_wheel_filenames(package, version):
+        parts = fn[:-4].split("-")
+        if len(parts) < 5:
+            continue
+        pytag_abi = "-".join(parts[-3:-1])
+        plat_tags = parts[-1].split(".")
+        if pytag_abi.endswith("-none-any") and parts[-3].startswith("py"):
+            return True
+        if pytag_abi == tag and any(
+            t.endswith(f"_{arch}") and (t.startswith("manylinux") or t.startswith("linux"))
+            for t in plat_tags
+        ):
+            return True
+    return False
+
+
 def load_buildspec(package: str) -> Dict[str, Any]:
     with open(PACKAGES_DIR / package / "build.yaml") as f:
         spec = yaml.safe_load(f)

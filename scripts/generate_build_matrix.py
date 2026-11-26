@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Print a JSON build matrix of (package, version, graalpy, platform) with no wheel on its release yet."""
+"""Print a JSON build matrix of (package, version, graalpy, platform) with no wheel on our releases
+and none published upstream on PyPI."""
 import itertools
 import json
 import sys
 
 import requests
 
-from common import list_packages, load_buildspec, released_builds
+from common import list_packages, load_buildspec, released_builds, upstream_has_wheel
 
 MAX_JOBS = 15
 
@@ -32,8 +33,12 @@ def main():
         for version, gp, plat in itertools.product(
             package_versions(package, spec), spec["graalpy"], spec["platforms"]
         ):
-            if (package, version, gp, plat) not in have:
-                matrix.append({"package": package, "version": version, "graalpy": gp, "platform": plat})
+            if (package, version, gp, plat) in have:
+                continue
+            if upstream_has_wheel(package, version, gp, plat):
+                print(f"skip {package} {version} {gp} {plat}: already on PyPI", file=sys.stderr)
+                continue
+            matrix.append({"package": package, "version": version, "graalpy": gp, "platform": plat})
     json.dump(matrix[:MAX_JOBS], sys.stdout)
 
 
